@@ -21,7 +21,7 @@
     "moment": "^2.17.0",
     "mongoose": "^4.6.8",
     "mongoose-type-email": "^1.0.2",
-    "morgan": "~1.7.0",
+    "morgan": "~1.10.0",
     "passport": "^0.3.2",
     "passport-local": "^1.0.0",
     "serve-favicon": "~2.3.0"

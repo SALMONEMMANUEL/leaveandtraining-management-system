@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/stylesheets/normalize.css">
+
+    <script src="/javascripts/prefixfree.min.js"></script>
+
+</head>
+
+<body>
+
+<div class="login">
+    <%- include('./includes/head.ejs') %>
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-sm navbar-dark bg-dark p-0">
+    <div class="container">
+      <a href="/" class="navbar-brand">LAMS</a>
+    </div>
+  </nav>
+
+  <!-- HEADER -->
+  <header id="main-header" class="py-2 bg-primary text-white">
+    <div class="container">
+        
+      <div class="row">
+        <div class="col-md-3">
+          <h1>
+           <img src="/images/moruwasa.png" alt="" style="width: 123px; height: 51px;border-radius: 12px;">
+          </h1>
+        </div>
+        <div class="col-md-9">
+        <h1>
+          Leave Application Management System
+         </h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ACTIONS -->
+  <section id="actions" class="py-4 mb-4 bg-light">
+    <div class="container">
+      <div class="row">
+
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGIN -->
+  <section id="login">
+    <div class="container">
+        
+      <div class="row">
+        <div class="col-md-6 mx-auto">
+          <div class="card">
+            <div class="card-header">
+              <h4>Login</h4>
+            </div>
+            <div class="card-body">
+              <form action="/login" method="POST">
+                <div class="form-group">
+                  <label for="email">Email</label>
+                  <input type="text" name="email" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                  <label for="password">Password</label>
+                  <input type="password" name="password" class="form-control">
+                  <input type="hidden" name="_csrf" value="<%= csrf %>">
+                </div>
+                <input type="submit" value="Login" onclick="validate()" class="btn btn-primary btn-block">
+                <%if(hasErrors){%>
+                    <% messages.forEach(function(item){%>
+                    <label style="color: red;" id="message"><%=item%></label>
+                    <%})%>
+            
+                    <%}%>
+            
+            </form>
+              <br>
+              <p class="text-center"><a href="/user/reset">Forgetten Password?</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+
+ 
+       
+<script src="/javascripts/index.js"></script>
+<script>
+    function validate() {
+        //document.getElementById("message").innerHTML = "Incorrect Username or Password";
+    }
+</script>
+  <!-- FOOTER -->
+  <%- include('./includes/end.ejs') %>
+<script>
+    // Get the current year for the copyright
+    $('#year').text(new Date().getFullYear());
+  </script>
+
+
+</body>
+</html>

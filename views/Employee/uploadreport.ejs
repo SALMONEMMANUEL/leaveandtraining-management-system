@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HRMS|<%= title %></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.css"/>
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/stylesheets/simple-sidebar.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css" rel="stylesheet">
+    <link href="/stylesheets/bootstrap-select.min.css" rel="stylesheet">
+    <link rel='stylesheet' href='/stylesheets/style.css'/>
+    <link rel="stylesheet" href="/stylesheets/bootstrap.css">
+
+</head>
+<body> 
+    <%-include('../includes/navbar.ejs')%>
+    <hr>
+
+<div id="wrapper">
+    <!-- Sidebar -->
+    <%-include('../includes/employee/sidenavfortraining.ejs')%>
+    <!-- /#sidebar-wrapper -->
+    <!-- Page Content -->
+   
+    <div id="page-content-wrapper">
+      <div class="navbar navbar-default no-margin">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-12">
+                  <div>
+                    <h3 class="text-center bg-info text-success">Upload Training Report</h3>
+                  </div>
+                  <br>
+                  
+                    <div>
+                    <form action="/employee/training" method="POST" enctype="multipart/form-data">
+                      <div class="form-group">
+                        <input type="hidden" name="_csrf" value="<%= csrf %>">
+                      <label for="document">Upload Material </label>
+                      <input type="file" name="document" id="document" required="required" >
+                      <small class="form-text text-muted">Max Size 3mb!</small>
+                    </div>
+                    <div class="modal-footer">
+                      <button class="btn btn-primary" type="submit">Submit</button>
+                    </div>
+                  </form>
+                </div>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+    <!-- /#page-content-wrapper -->
+    <header>
+
+    </header>
+   
+    <%-include('../includes/admin/footer.ejs')%>
+    <%-include('../includes/end.ejs')%>
+
+</div>
+<!-- /#wrapper -->
+<!-- jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.js" charset="UTF-8"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.js" charset="UTF-8"></script>
+
+
+<script src="/javascripts/sidebar_menu.js"></script>
+<script>
+
+</script>
+
+</body>
+
+
+</html>
+
+  
+
+
+
+
+
+
+

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+   <table>
+       <%result.forEach(result=>{%>
+       <thead>
+           <th>title</th>
+           <th>salary</th>
+           <th>address</th>
+       </thead>
+
+       <tbody>
+           <tr>
+               <td><%=result.title%></td>
+               <td>welcome</td>
+               <td>true value</td>
+           </tr>
+           <tr>
+               <td><%=result.address%></td>
+               <td>mini salmon</td>
+               <td>welcome at home</td>
+               
+           </tr>
+           <tr>
+               <td><%=result.salary%></td>
+               <td>minina</td>
+               <td>welcome mina</td>
+           </tr>
+       </tbody>
+   </table>
+   <%})%>
+</body>
+</html>

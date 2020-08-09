@@ -77,23 +77,21 @@ router.get('/dummy', function (req, res, next) {
 
 });
 
-/**
- * Description:
- * Checks which type of user has logged in to the system
- *
- * Author: Hassan Qureshi
- *
- * Last Updated: 26th November, 2016
- *
- * Known Bugs: None
- */
+//   Checks which type of user has logged in to the system
+
 
 router.get('/check-type', function checkTypeOfLoggedInUser(req, res, next) {
     req.session.user = req.user;
-    if (req.user.type == "project_manager") {
+    if (req.user.type == "commercial_manager") {
         res.redirect('/manager/');
     }
-    else if (req.user.type == "accounts_manager") {
+    else if (req.user.type == "financial_manager") {
+        res.redirect('/manager/');
+    }
+    else if (req.user.type == "human_resource_manager") {
+        res.redirect('/manager/');
+    }
+    else if (req.user.type == "technical_manager") {
         res.redirect('/manager/');
     }
     else if (req.user.type == "employee") {
@@ -105,16 +103,9 @@ router.get('/check-type', function checkTypeOfLoggedInUser(req, res, next) {
 
 });
 
-/**
- * Description:
- * Authenticates user login request and on success redirects user to his/her home page
- *
- * Author: Hassan Qureshi
- *
- * Last Updated: 26th November, 2016
- *
- * Known Bugs: None
- */
+
+//  Authenticates user login request and on success redirects user to his/her home page
+ 
 
 router.post('/login', passport.authenticate('local.signin', {
     successRedirect: '/check-type',

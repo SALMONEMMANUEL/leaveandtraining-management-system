@@ -22,15 +22,16 @@
     <!-- Page Content -->
 
     <div id="page-content-wrapper">
-        <div class="container-fluid">
+        <div class="container-fluid" style="min-height: 400px;">
             <div class="navbar navbar-default no-margin">
             <div class="row">
-                <div class="col-lg-12">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                     <div class="card-header">
                     <h1>All Employees</h1>
                     </div>
-                    <div style="height:517px; overflow: auto">
-                        <table id="example"  class="table table-striped" cellspacing="0" style="height: 10%; overflow: auto;">
+                    <!-- <div class="d-flex" style="width: 100%; min-height: 50px; padding: 5px; box-sizing: border-box; flex-direction: row; justify-content: space-between;"> -->
+                    <div style="height:717px; overflow: auto">
+                        <table id="example"  class=" table-responsive" cellspacing="0" style="height: 10%; overflow: auto; margin-bottom: 10px; min-height: 300px;">
                             <thead class="thead-dark">
                             <tr>
                                 <th>Name</th>
@@ -41,6 +42,7 @@
                                 <th></th>
                             </tr>
                             </thead>
+                       
                         
                             <tbody>
                             <% users.forEach(function(item){ %>
@@ -63,10 +65,35 @@
                                     else{%>
                                     <%=item.designation%>
                                     <%}%></td>
+                                   
                                     
                                 <td>
                                     <table cellspacing="0px">
                                         <tr>
+
+                                            <td class="text-center">
+                                                <%= (item.is_active == 1) ? 'Active' : 'Disabled' %>
+                                              </td>
+                                              <td class="text-center">
+                                                <% if(item.is_active == 1){ %>
+                                                <form action="/admin/user/status/update" method="POST">
+                                                  <input type="hidden" name="is_active" value="0">
+                                                  <input type="hidden" name="_csrf" value="<%= csrf %>">
+                                                  <input type="hidden" name="userId" value="<%= item._id %>">
+                                                  <button type="submit" class="btn btn-warning btn-sm">Disable</button>
+                                                </form>
+                                                <% }else{ %>
+                                                  <form action="/admin/user/status/update" method="POST">
+                                                    <input type="hidden" name="is_active" value="1">
+                                                    <input type="hidden" name="_csrf" value="<%= csrf %>">
+                                                    <input type="hidden" name="userId" value="<%= item._id %>">
+                                                    <button type="submit" class="btn btn-primary btn-sm">Enable</button>
+                                                  </form>
+                                                <% } %>
+                                            </td>
+
+
+
                                             <td style="padding: 0%;">
                                                 <form method="get" action="/admin/employee-profile/<%= item._id %>">
                                                     <button type="submit" class="btn btn-success"><i class="fa fa-eye"
@@ -81,29 +108,13 @@
                                                                              aria-hidden="true"></i></button>
                                                 </form>
                                             </td>
-                                            <td style="padding: 0%;">
+
+                                            <!-- <td style="padding: 0%;">
                                                 <button data-toggle="modal" class="delete-button  btn btn-danger" id="<%= item._id %>"
                                                         data-target="#myModal1" ><i class="fa fa-trash "
                                                                                    title="Delete Employee"
                                                                                    aria-hidden="true"></i></button>
-                                            </td>
-                                            <% if(item.type != "accounts_manager"){ %>
-                                            <td style="padding: 0%;">
-                                                <form method="get" action="/admin/add-employee-project/<%= item._id %>">
-                                                    <button type="submit"><i class="fa fa-plus"
-                                                                             title="Add Employee Project"
-                                                                             aria-hidden="true"></i></button>
-                                                </form>
-                                            </td>
-                                            <td style="padding: 0%;">
-                                                <form method="get"
-                                                      action="/admin/all-employee-projects/<%= item._id %>">
-                                                    <button type="submit"><i class="fa fa-tasks"
-                                                                             title="View Employee Projects"
-                                                                             aria-hidden="true"></i></button>
-                                                </form>
-                                            </td>
-                                            <% } %>
+                                            </td> -->
                                         </tr>
                                     </table>
                                 </td>
@@ -113,14 +124,16 @@
                             </tbody>
                         </table>
                     </div>
+                    
                 </div>
             </div>
             </div>
         </div>
+        <%-include('../includes/admin/footer.ejs')%>
+        <%-include('../includes/end.ejs')%>
     </div>
     <!-- /#page-content-wrapper -->
-    <%-include('../includes/admin/footer.ejs')%>
-    <%-include('../includes/end.ejs')%>
+
 
 </div>
 
@@ -151,34 +164,6 @@
     });
 </script>
 <script>
-
-    // $(document).ready(function () {
-
-    //     $('#menu3').click();
-    //     // Setup - add a text input to each footer cell
-    //     $('#example tfoot th').each(function () {
-    //         var title = $(this).text();
-    //         if (title != " ") {
-    //             $(this).html('<input type="text" class="form-control" placeholder="Search ' + title + '" />');
-    //         }
-    //     });
-       
-    //     // DataTable
-    //     var table = $('#example').DataTable();
-
-    //     // Apply the search
-    //     table.columns().every(function () {
-    //         var that = this;
-
-    //         $('input', this.footer()).on('keyup change', function () {
-    //             if (that.search() !== this.value) {
-    //                 that
-    //                         .search(this.value)
-    //                         .draw();
-    //             }
-    //         });
-    //     });
-    // });
 </script>
 </body>
 <div id="myModal1" class="modal fade" role="dialog">
@@ -203,72 +188,6 @@
                 </div>
             </div>
         </form>
-    </div>
-</div>
-<div id="myModal2" class="modal fade" role="dialog">
-    <div class="modal-dialog">
-        <form method="post" action="/admin/mark-attendance">
-            <!-- Modal content-->
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Mark Attendance</h4>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to mark attendance.</p>
-                </div>
-                <div class="modal-footer">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <button type="reset" class="btn btn-default" data-dismiss="modal">No</button>
-                    <button type="submit" class="btn btn-default">Yes</button>
-                </div>
-
-            </div>
-        </form>
-    </div>
-</div>
-<div id="myModal" class="modal fade" role="dialog">
-    <div class="modal-dialog">
-
-        <!-- Modal content-->
-        <div class="modal-content">
-            <form method="post" action="/admin/view-attendance">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Select Month/Year</h4>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="Month">Month:</label>
-                        <select class="form-control" id="month" name="month">
-                            <option value="1">January</option>
-                            <option value="2">February</option>
-                            <option value="3">March</option>
-                            <option value="4">April</option>
-                            <option value="5">May</option>
-                            <option value="6">June</option>
-                            <option value="7">July</option>
-                            <option value="8">August</option>
-                            <option value="9">September</option>
-                            <option value="10">October</option>
-                            <option value="11">November</option>
-                            <option value="12">December</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="year">Year:</label>
-                        <select class="form-control" id="year" name="year">
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <button type="reset" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-default">View</button>
-                </div>
-            </form>
-        </div>
-
     </div>
 </div>
 </html>

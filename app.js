@@ -1,23 +1,39 @@
 var express = require('express');
 var path = require('path');
-var favicon = require('serve-favicon');
 var logger = require('morgan');
+var utilPath = require('./util/path')
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var mongoose=require('mongoose');
+expressValidator = require('express-validator');
 var session= require('express-session');
 var passport= require('passport');
 const csurf = require('csurf');
 var flash= require('connect-flash');
 var MongoStore= require('connect-mongo')(session);
+const multer = require('multer');
+
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+      cb(null, 'documents');
+  },
+  filename: (req, file, cb) => {
+      cb(null, Date.now() + file.originalname);
+  }
+})
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype === 'document/png' || file.mimetype === 'document/jpg' || file.mimetype === 'document/jpe' || file.mimetype === 'document/jpeg') {
+      cb(null, true);
+  } else {
+      cb(null, false);
+  }
+}
 
 var index = require('./routes/index');
 var users = require('./routes/users');
 var admin = require('./routes/admin');
 var employee = require('./routes/employee');
 var manager = require('./routes/manager');
-
-expressValidator = require('express-validator');
 
 mongoose.Promise = global.Promise;
 mongoose.connect('mongodb://localhost:27017/HRMSii',
@@ -41,15 +57,25 @@ const csrfProtection = csurf();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+app.use(multer({
+  storage: fileStorage
+
+}).single('document'));
+app.use(express.static(path.join(utilPath, 'public')));
+app.use('/documents', express.static(path.join(__dirname, 'documents')));
+
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-// app.use(logger('dev'));
+app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 //validator should be ater body parser
 app.use(expressValidator());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "node_modules/axios/dist")));
+app.use(express.static(path.join(__dirname, "node_modules/vue/dist")));
+app.use(express.static(path.join(__dirname, "node_modules/bootstrap/dist")))
 app.use(session({
   secret: 'mysupersecret', resave: false, saveUninitialized: false, store: new MongoStore({
     mongooseConnection: mongoose.connection
@@ -97,7 +123,7 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-app.listen(5000,(err)=>{
+app.listen(8000,(err)=>{
   if(err){
     console.log('server is not started')
   }

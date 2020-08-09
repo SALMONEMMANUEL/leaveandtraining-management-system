@@ -2,16 +2,26 @@ var express = require('express');
 var router = express.Router();
 var passport = require('passport');
 var User = require('../models/user');
-var Project = require('../models/project');
+const adminController = require('../config/staffs');
 var csrf = require('csurf');
 var csrfProtection = csrf();
+const staffController = require('../config/staffs');
 var config_passport = require('../config/passport.js');
 var moment = require('moment');
 var Leave = require('../models/leave');
-var Attendance = require('../models/attendance');
-var Leavetype = require('../models/createleave');
+let modeLeave = require('../models/leavee');
+const leave = require('../models/leave');
+const user = require('../models/user');
+const { count, populate } = require('../models/user');
+const Request = require('../models/training/upload');
+const Department = require('../models/department')
+var Trequest = require('../models/training/request');
 
-let modeLeave = require('../models/leavee')
+let path = require("path")
+let fs = require("fs")
+let json2xls = require("json2xls");
+const { Router } = require('express');
+const { type } = require('os');
 
 router.use('/', isLoggedIn, function isAuthenticated(req, res, next) {
     next();
@@ -28,14 +38,391 @@ router.get('/', function viewHome(req, res, next) {
         userName: req.session.user.name
     });
 });
+
+
+
+
+
+
+
+
+
+
 //display the admin dashboard for laeve
-router.get('/dashboard',function dashboard(req,res,next){
-    res.render('Admin/dashboard',{
-        title:'Admin dashboard',
-        userName: req.session.user.name
+
+router.get('/dashboard', async function dashboard(req, res, next){
+
+    const dataone = Leave.find({}).populate("applicantID")
+
+    let countObj = {}
+
+    const countArray = [
+        Leave.count({ adminResponse : "Pending" }, (error, result) => { countObj["pending"] = result }),
+        Leave.count({ adminResponse : "Approved" }, (error, result) =>  { countObj["approved"] = result }),  
+        Leave.count({ adminResponse : "Disapproved" }, (error, result) => {   countObj["disapproved"] = result })
+    ]
+
+    dataone.exec((error, docone) => {
+
+        if(error)console.log(error)
+        else{
+
+            let dep = ["All"] // department
+            let target_data = []
+
+            for(let a = 0; a < docone.length; a++){
+
+                let { type, period, adminResponse, appliedDate } = docone[a]
+                let { name, department } = docone[a]["applicantID"]
+                let depart = (department == undefined) ? "N/A" : department
+               
+                if(!dep.includes(depart)){
+
+                    dep.push(depart)
+                }
+
+                target_data.push({
+
+                    department : department,
+                    name : name,
+                    type : type,
+                    date : appliedDate,
+                    period : period,
+                    status : adminResponse,
+                })
+            }
+
+            Promise.all(countArray)
+            .then((countObj) => {
+        
+                let total = countObj[0] + countObj[1] + countObj[2]
+
+                res.render('Admin/dashboard',{
+                
+                    depart : dep,
+                    total : total,
+                    approved : countObj[1],
+                    disapproved : countObj[2],
+                    pending : countObj[0],
+                    leave : target_data,
+                    title:'Admin dashboard',
+                    csrfToken: req.csrfToken(),
+                    userName: req.session.user.name,
+                })
+
+            })
+        }
     })
 })
-// admin trasining home
+
+
+
+
+
+
+
+
+
+// filter
+router.get('/filter/:status/:date', function(req, res){
+
+    let { status, date } = req.params;
+
+    let departone = (status == "empty") ? "N/A" : status;
+    
+    const dataone = Leave.find({}).populate("applicantID")
+
+    dataone.exec((error, docone) => {
+
+        if(error)console.log(error)
+        else{
+
+            let target_data = []
+
+            if(status == "All"){
+
+                console.log('r')
+
+                all_or_other(res, "All")
+            }else{
+
+                console.log('r')
+
+                all_or_other(res, departone)
+            }
+
+            function all_or_other(res, departone){
+
+                let pen = 0 // pending
+                let app = 0 // approved
+                let disa = 0 // disapproved
+    
+                for(let a = 0; a < docone.length; a++){
+    
+                    let { type, period, adminResponse, appliedDate } = docone[a]
+                    let { name, department } = docone[a]["applicantID"]
+    
+                    let departwo = (department == undefined) ? "N/A" : department
+    
+                    let insideDate = new Date(appliedDate)
+
+                    let year = insideDate.getFullYear()
+                    let month = insideDate.getMonth() + 1
+                    let datee = insideDate.getDate()
+
+                    let full_time_format = `${year +'-'+
+                                              ((month < 10) ? "0".concat(month) : month) +'-'+
+                                              ((datee < 10) ? "0".concat(datee) : datee) }`
+
+
+                    if(departone == "All"){
+                        // filter by date and not department
+
+                        if(date == full_time_format){
+
+                            target_data.push({
+    
+                                department : departwo,
+                                name : name,
+                                type : type,
+                                date : appliedDate,
+                                period : period,
+                                status : adminResponse,
+                            })
+                        }
+
+                    }else if(departone == departwo){
+                        // filter by department
+
+                        if(adminResponse == "Pending"){
+                            pen++
+                        }
+    
+                        if(adminResponse == "Approved"){
+                            app++
+                        }
+    
+                        if(adminResponse == "Disapproved"){
+                            disa++
+                        }
+    
+                        if(date !== "null"){
+    
+                            if(date == full_time_format){
+
+                                target_data.push({
+        
+                                    department : departwo,
+                                    name : name,
+                                    type : type,
+                                    date : appliedDate,
+                                    period : period,
+                                    status : adminResponse,
+                                })
+
+                            }
+
+                        }else{
+
+                            target_data.push({
+
+                                department : departwo,
+                                name : name,
+                                type : type,
+                                date : appliedDate,
+                                period : period,
+                                status : adminResponse,
+                            })
+                        
+                        }
+                    }
+                }
+    
+                let total = (app + disa + pen)
+    
+                res.send({ app, disa, pen, total, target_data })
+            }
+        }
+    })
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+router.post('/downloads', function(req, res){
+
+    let { status, date } = req.body;
+
+    const dataone = Leave.find({}).populate("applicantID")
+
+    dataone.exec((error, docone) => {
+
+        if(error)console.log(error)
+        else{
+
+            let target_data = []
+
+            if(status == "All"){
+
+                all_or_other("All")
+            }else{
+
+                all_or_other(status)
+            }
+
+            async function all_or_other(departone){
+
+                let pen = 0 // pending
+                let app = 0 // approved
+                let disa = 0 // disapproved
+    
+                for(let a = 0; a < docone.length; a++){
+    
+                    let { type, period, adminResponse, appliedDate } = docone[a]
+                    let { name, department } = docone[a]["applicantID"]
+    
+                    let departwo = (department == undefined) ? "N/A" : department
+    
+                    let insideDate = new Date(appliedDate)
+
+                    let year = insideDate.getFullYear()
+                    let month = insideDate.getMonth() + 1
+                    let datee = insideDate.getDate()
+
+                    let full_time_format = `${year +'-'+
+                                              ((month < 10) ? "0".concat(month) : month) +'-'+
+                                              ((datee < 10) ? "0".concat(datee) : datee) }`
+
+
+                    if(departone == "All"){
+                        // filter by date and not department
+
+                        if(date == "null"){
+
+                            target_data.push({
+    
+                                department : departwo,
+                                name : name,
+                                type : type,
+                                date : appliedDate,
+                                period : period,
+                                status : adminResponse,
+                            })
+
+                        }else if(date == full_time_format){
+
+                            target_data.push({
+    
+                                department : departwo,
+                                name : name,
+                                type : type,
+                                date : appliedDate,
+                                period : period,
+                                status : adminResponse,
+                            })
+                        }
+
+                    }else if(departone == departwo){
+                        // filter by department
+
+                        if(adminResponse == "Pending"){
+                            pen++
+                        }
+    
+                        if(adminResponse == "Approved"){
+                            app++
+                        }
+    
+                        if(adminResponse == "Disapproved"){
+                            disa++
+                        }
+    
+                        if(date !== "null"){
+    
+                            if(date == full_time_format){
+
+                                target_data.push({
+        
+                                    department : departwo,
+                                    name : name,
+                                    type : type,
+                                    date : appliedDate,
+                                    period : period,
+                                    status : adminResponse,
+                                })
+
+                            }
+
+                        }else{
+
+                            target_data.push({
+
+                                department : departwo,
+                                name : name,
+                                type : type,
+                                date : appliedDate,
+                                period : period,
+                                status : adminResponse,
+                            })
+                        
+                        }
+                    }
+                }
+    
+                let appDir = path.dirname(require.main.filename);
+
+                
+                let target_data = [
+                {Department:"Commercial",
+                Name:"	mnepo juma",Type:"Martenity leave",AppliedDate:"	2020-08-06T10:02:51.201Z",Period:'84', Status:"	Approved"},
+                {Department:"Commercial",
+                Name:"	mnepo juma",Type:"	Special Leave",AppliedDate:"	2020-08-06T10:02:51.201Z",Period:'5', Status:"	Pending"}
+            ]
+                     let xls = json2xls(target_data)
+
+                let filename = new Date().getTime()
+
+                let file = `${path.join(appDir, '/public/uploaded/xls/') +  (filename + ".xlsx") }`
+
+                await fs.writeFile(file, xls, "binary", (err) => {
+                    
+                    if (err) throw err;
+
+                    console.log("file save successful")
+
+                    res.download(file, error => {
+
+                        console.log("Error during file downloads: ", error)
+                    })
+                });
+            }
+        }
+
+    })
+    // .catch(e => {
+
+    //     console.log(e)
+    // })
+})
+
+
+
+// admin trasining home1
 router.get('/traininghome', function traininghome(req, res, next) {
     res.render('Admin/traininghome', {
         title: 'Admin training home',
@@ -43,11 +430,228 @@ router.get('/traininghome', function traininghome(req, res, next) {
         userName: req.session.user.name
     });
 });
+//employee status
+// router.post('/user/status/update', adminController.postStaffStatus);
+
+// admin dashboard for training management system
+// router.get('/dashboardtraining',function dashboard(req,res,next){
+//     let gt, lt,g;
+//     Leave.find({})
+//     .then(result=>{
+//       console.log(result)
+//         res.render('Admin/dashboard',{
+//             title:'Admin dashboard',
+//             result:result,
+//             userName: req.session.user.name
+        
+//     })
+//     })
+  
+//       .catch(err => console.error(err));
+   
+// })
+
+//admin uploading document of material
+router.get('/upload', function uploadmaterial(req, res, next) {
+    res.render('users/index', {
+        title: 'training materials',
+        csrfToken: req.csrfToken(),
+        userName: req.session.user.name
+    });
+
+});
 
 
-// admin dashboard
+router.post('/training', [
 
 
+], staffController.postmaterial);
+
+// router.post('/training',function(req,res,next){
+
+//     let { attachment,date } = req.file;
+    
+//     let material = new Material({
+//         attachment:attachment,
+//         date:date
+        
+//     })
+//     material.save(function(err ,doc){
+//         if(err){
+//             console.log('data not saved')
+//         }
+//         else{
+//             res.redirect('/admin/upload')
+//             console.log('data saved successfully')
+//         }
+//     })
+
+    
+
+// })
+
+
+// const Department = require('../models/department')
+
+//view the uploaded employee reports
+router.get('/viewuploadedreport',function viewuploadedreport(req,res,next){
+    
+    var reportChunks = [];
+    var employeeChunks = [];
+    var temp;
+    //find is asynchronous function
+    Request.find({}).sort({_id: -1}).exec(function findAllRequests(err, docs) {
+        var hasReport = 0;
+        if (docs.length > 0) {
+            hasReport = 1;
+        }
+        for (var i = 0; i < docs.length; i++) {
+            reportChunks.push(docs[i])
+        }
+        for (var i = 0; i < reportChunks.length; i++) {
+    
+    User.findById(reportChunks[i].applicantID, function getUser(err, user) {
+        if (err) {
+            console.log(err);
+        }
+        employeeChunks.push(user);
+
+    })
+        }
+        setTimeout(render_view, 900);
+        function render_view() {
+        res.render('Admin/viewuploadedreport',{
+            title:'view training report',
+            hasReport:hasReport,
+            request:reportChunks,
+            csrfToken: req.csrfToken(),
+            userName: req.session.user.name,
+            employees: employeeChunks, moment: moment,
+        
+    })
+}
+    })
+  
+      .catch(err => console.error(err));
+   
+})
+
+//view all training requesting by the employee
+router.get('/viewTrainingrequest',function viewuploadedreport(req,res,next){
+    
+    var RequestChunks = [];
+    var employeeChunks = [];
+    var temp;
+    //find is asynchronous function
+    Trequest.find({}).sort({_id: -1}).exec(function findAllRequests(err, docs) {
+        var hasTraining = 0;
+        if (docs.length > 0) {
+            hasTraining = 1;
+        }
+        for (var i = 0; i < docs.length; i++) {
+            RequestChunks.push(docs[i])
+        }
+        for (var i = 0; i < RequestChunks.length; i++) {
+    
+    User.findById(RequestChunks[i].applicantID, function getUser(err, user) {
+        if (err) {
+            console.log(err);
+        }
+        employeeChunks.push(user);
+
+    })
+        }
+        setTimeout(render_view, 900);
+        function render_view() {
+        res.render('Admin/viewTrainingrequest',{
+            title:'view training request',
+            hasTraining:hasTraining,
+            request:RequestChunks,
+            userName: req.session.user.name,
+            employees: employeeChunks, moment: moment,
+        
+    })
+}
+    })
+  
+      .catch(err => console.error(err));
+   
+})
+
+//dowload the documents
+router.get('/download',(req,res)=>{  
+    Request.find({_id:req.params.id},(err,data)=>{  
+        if(err){  
+            console.log(err)  
+        }   
+        else{  
+            console.log(data)
+           var path =  path.dirname(require.main.filename);  
+           res.download(path);  
+        }  
+    })  
+})
+
+
+
+
+
+// view the list of departments
+router.get('/department', function department(req, res, next) {
+    Department.find({})
+    .then(item=>{
+        res.render('Admin/viewdepartment', {
+            item:item,
+            title: 'List of departments',
+            csrfToken: req.csrfToken(),
+            userName: req.session.user.name
+        });
+    })
+ 
+
+});
+//add department 
+router.post('/department',(req,res,next)=>{
+
+    let { departmentName } = req.body
+    // console.log({departmentName})
+
+
+    // console.log({ appdate, leave, period })
+
+    Department.findOne({ "type" : departmentName }, function(error, docone){
+
+        if(error){
+            console.log("Error: ", error);
+        }else{
+
+            if(!docone){
+
+                let dataone = new Department({
+
+                    type:departmentName,
+                    
+                })
+
+                dataone.save(function(error, result){
+
+                    if(error) console.log("Error: ", error);
+                    else{
+
+                        res.redirect('/admin/department')     
+                        console.log("document saved successfull");
+                    }
+                })
+
+            }else{
+                res.redirect('/admin/department')       
+            }
+        }
+    })
+})
+
+
+//profile
 router.get('/view-profile', function viewProfile(req, res, next) {
 
     User.findById(req.session.user._id, function getUser(err, user) {
@@ -76,7 +680,8 @@ router.get('/view-all-employees', function viewAllEmployees(req, res, next) {
     var userChunks = [];
     var chunkSize = 3;
     //find is asynchronous function
-    User.find({$or: [{type: 'employee'}, {type: 'project_manager'}, {type: 'accounts_manager'}]}).sort({_id: -1}).exec(function getUsers(err, docs) {
+    User.find({$or: [{type: 'employee'}, {type: 'commercial_manager'}, 
+    {type: 'financial_manager'}, {type: 'technical_manager'}, {type: 'human_resource_manager'}]}).sort({_id: -1}).exec(function getUsers(err, docs) {
         for (var i = 0; i < docs.length; i++) {
             userChunks.push(docs[i]);
         }
@@ -96,6 +701,17 @@ router.get('/view-all-employees', function viewAllEmployees(req, res, next) {
 
 
 router.get('/add-employee', function addEmployee(req, res, next) {
+    Department.find( {}, { _id : 0, type : 1 },function(error,docone){
+        if(error)console.log('Error:',error);
+        else{
+         let type=[]
+         for(let a = 0; a < docone.length; a++){
+             if(!type.includes(docone[a]['type'])){
+                 type.push(docone[a]['type'])
+             }
+         }
+      
+   
     var messages = req.flash('error');
     var newUser = new User();
 
@@ -103,54 +719,48 @@ router.get('/add-employee', function addEmployee(req, res, next) {
         title: 'Add Employee',
         csrfToken: req.csrfToken(),
         user: config_passport.User,
+          type : type,
         messages: messages,
         hasErrors: messages.length > 0,
         userName: req.session.user.name
     });
-
+}
+})
 });
 
-/**
- * Description:
- * First it gets the id of the given employee from the parameters.
- * Finds the project of the employee from Project Schema with the help of that id.
- * Then displays all the projects of the given employee.
- *
- * Author: Salman Nizam
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
-router.get('/all-employee-projects/:id', function getAllEmployeePojects(req, res, next) {
-    var employeeId = req.params.id;
-    var projectChunks = [];
+//   First it gets the id of the given employee from the parameters.
+//   Finds the project of the employee from Project Schema with the help of that id.
+//   Then displays all the projects of the given employee.
+ 
+// router.get('/all-employee-projects/:id', function getAllEmployeePojects(req, res, next) {
+//     var employeeId = req.params.id;
+//     var projectChunks = [];
 
-    //find is asynchronous function
-    Project.find({employeeID: employeeId}).sort({_id: -1}).exec(function findProjectOfEmployee(err, docs) {
-        var hasProject = 0;
-        if (docs.length > 0) {
-            hasProject = 1;
-        }
-        for (var i = 0; i < docs.length; i++) {
-            projectChunks.push(docs[i]);
-        }
-        User.findById(employeeId, function getUser(err, user) {
-            if (err) {
-                console.log(err);
-            }
-            res.render('Admin/employeeAllProjects', {
-                title: 'List Of Employee Projects',
-                hasProject: hasProject,
-                projects: projectChunks,
-                csrfToken: req.csrfToken(),
-                user: user,
-                userName: req.session.user.name
-            });
-        });
+//     //find is asynchronous function
+//     Project.find({employeeID: employeeId}).sort({_id: -1}).exec(function findProjectOfEmployee(err, docs) {
+//         var hasProject = 0;
+//         if (docs.length > 0) {
+//             hasProject = 1;
+//         }
+//         for (var i = 0; i < docs.length; i++) {
+//             projectChunks.push(docs[i]);
+//         }
+//         User.findById(employeeId, function getUser(err, user) {
+//             if (err) {
+//                 console.log(err);
+//             }
+//             res.render('Admin/employeeAllProjects', {
+//                 title: 'List Of Employee Projects',
+//                 hasProject: hasProject,
+//                 projects: projectChunks,
+//                 csrfToken: req.csrfToken(),
+//                 user: user,
+//                 userName: req.session.user.name
+//             });
+//         });
 
-    });
-});
+//     });
+// });
 
 
 // show the lists of all leave application aplied by theemployees
@@ -227,7 +837,35 @@ router.get('/respond-application/:leave_id/:employee_id', function respondApplic
 });
 
 
+//display the reasons approved by the manager
+router.get('/manager-reasons/:leave_id/:employee_id', function respondApplication(req, res, next) {
+    var leaveID = req.params.leave_id;
+    var employeeID = req.params.employee_id;
+    Leave.findById(leaveID, function getLeave(err, leave) {
 
+        if (err) {
+            console.log(err);
+        }
+        User.findById(employeeID, function getUser(err, user) {
+            if (err) {
+                console.log(err);
+            }
+            res.render('Admin/managerrespond', {
+                title: 'Respond Leave Application',
+                csrfToken: req.csrfToken(),
+                leave: leave,
+                employee: user,
+                moment: moment, userName: req.session.user.name
+            });
+
+
+        })
+
+
+    });
+
+
+});
 //  Displays profile of the employee with the help of the id of the employee from the parameters.
 
 router.get('/employee-profile/:id', function getEmployeeProfile(req, res, next) {
@@ -305,8 +943,6 @@ router.post('/create-leave',(req,res,next)=>{
 
     let { appdate, leave, period } = req.body
 
-    console.log({ appdate, leave, period })
-
     modeLeave.findOne({ "type" : leave }, function(error, docone){
 
         if(error){
@@ -317,7 +953,7 @@ router.post('/create-leave',(req,res,next)=>{
 
                 let dataone = new modeLeave({
 
-                    type : leave,
+                    type :leave,
                     appdate: appdate,
                     period : period
                 })
@@ -354,102 +990,67 @@ router.post('/create-leave',(req,res,next)=>{
     // })
 })
 
+// delete leave
 
-// displays the admin its own attendance sheet
-
-router.post('/view-attendance', function viewAttendance(req, res, next) {
-    var attendanceChunks = [];
-    Attendance.find({
-        employeeID: req.session.user._id,
-        month: req.body.month,
-        year: req.body.year
-    }).sort({_id: -1}).exec(function viewAttendanceSheet(err, docs) {
-        var found = 0;
-        if (docs.length > 0) {
-            found = 1;
+router.post('/delete-leave/:id', function deleteleave(req, res) {
+    var id = req.params.id;
+    modeLeave.findByIdAndRemove({_id: id}, function deleteleave(err) {
+        if (err) {
+            console.log('unable to delete employee');
         }
-        for (var i = 0; i < docs.length; i++) {
-            attendanceChunks.push(docs[i]);
+        else {
+            res.redirect('/admin/create-leave');
         }
-        res.render('Admin/viewAttendanceSheet', {
-            title: 'Attendance Sheet',
-            month: req.body.month,
-            csrfToken: req.csrfToken(),
-            found: found,
-            attendance: attendanceChunks,
-            userName: req.session.user.name,
-            moment: moment
-        });
     });
-
-
 });
 
-//  After marking attendance.
-//  Shows current attendance to the admin.
- 
- 
-router.get('/view-attendance-current', function viewCurrentlyMarkedAttendance(req, res, next) {
-    var attendanceChunks = [];
 
-    Attendance.find({
-        employeeID: req.session.user._id,
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
-    }).sort({_id: -1}).exec(function getAttendanceSheet(err, docs) {
-        var found = 0;
-        if (docs.length > 0) {
-            found = 1;
+//get edit leave
+router.get('/edit-leave/:id', function editleave(req, res, next) {
+    var leaveId = req.params.id;
+    modeLeave.findById(leaveId, function getLeave(err, type) {
+        if (err) {
+            res.redirect('/admin/');
         }
-        for (var i = 0; i < docs.length; i++) {
-            attendanceChunks.push(docs[i]);
-        }
-        res.render('Admin/viewAttendanceSheet', {
-            title: 'Attendance Sheet',
-            month: new Date().getMonth() + 1,
+        res.render('Admin/editleave', {
+            title: 'Edit Leave',
             csrfToken: req.csrfToken(),
-            found: found,
-            attendance: attendanceChunks,
+            type: type,
             moment: moment,
+            message: '',
             userName: req.session.user.name
         });
+
+
     });
 
 });
 
-//   Displays the attendance sheet of the given employee to the admin.
+//post the edited leave type
 
-router.get('/view-employee-attendance/:id', function viewEmployeeAttendance(req, res, next) {
-    var attendanceChunks = [];
-    Attendance.find({employeeID: req.params.id}).sort({_id: -1}).exec(function getAttendanceSheet(err, docs) {
-        var found = 0;
-        if (docs.length > 0) {
-            found = 1;
+
+router.post('/edit-leave/:id', function editleave(req, res) {
+    var leaveId = req.params.id;
+    var newLeave = new modeLeave();
+
+    modeLeave.findById(leaveId, function (err, type) {
+        if (err) {
+            console.log(err);
         }
-        for (var i = 0; i < docs.length; i++) {
-            attendanceChunks.push(docs[i]);
-        }
+        type.type = req.body.type;
+        type.appdate = new Date(req.body.appdate)
+         type.period = req.body.period;
 
-        User.findById(req.params.id, function getUser(err, user) {
+        type.save(function saveleave(err) {
+            if (err) {
+                console.log(err);
+            }
+            res.redirect('/admin/create-leave/' + leaveId);
 
-            res.render('Admin/employeeAttendanceSheet', {
-                title: 'Employee Attendance Sheet',
-                month: req.body.month,
-                csrfToken: req.csrfToken(),
-                found: found,
-                attendance: attendanceChunks,
-                moment: moment,
-                userName: req.session.user.name
-                ,
-                'employee_name': user.name
-
-            })
         });
     });
 
-
 });
-
 
 //   Adds employee to the User Schema by getting attributes from the body of the post request.
 //   Then redirects admin to the profile information page of the added employee.
@@ -501,7 +1102,7 @@ router.post('/edit-employee/:id', function editEmployee(req, res) {
     newUser.name = req.body.name,
         newUser.dateOfBirth = new Date(req.body.DOB),
         newUser.contactNumber = req.body.number,
-        newUser.department = req.body.department;
+        newUser.type = req.body.type;
     newUser.Skills = req.body['skills[]'];
     newUser.designation = req.body.designation;
 
@@ -539,13 +1140,13 @@ router.post('/edit-employee/:id', function editEmployee(req, res) {
         user.name = req.body.name,
             user.dateOfBirth = new Date(req.body.DOB),
             user.contactNumber = req.body.number,
-            user.department = req.body.department;
+            user.type = req.body.type;
         user.Skills = req.body['skills[]'];
         user.designation = req.body.designation;
 
         user.save(function saveUser(err) {
             if (err) {
-                console.log(error);
+                console.log('Error:',err);
             }
             res.redirect('/admin/employee-profile/' + employeeId);
 
@@ -629,46 +1230,31 @@ router.post('/delete-employee/:id', function deleteEmployee(req, res) {
     });
 });
 
+//posting the employee ststus
+router.post('/user/status/update',function update(req,res){
+    const is_active = req.body.is_active;
+    const userId = req.body.userId;
+    User.findOne({
+            _id: userId
+        })
+        .then(user => {
+            if (!user) {
+                return next(new Error('An error occured'));
+            }
+            user.is_active = is_active;
+            return user.save()
+        })
+        .then(() => {
+            req.flash('error', 'Account setting changed!');
+            res.redirect('/admin/view-all-employees');
+        })
+        .catch(err => {
+            console.log(err);
+        })
+})
 
 
 
-//   Gets id of the current logged in user from the session.
-//   Gets current date.
-//   Marks the attendance of that user in Attendance Schema.
-
-
-router.post('/mark-attendance', function markAttendance(req, res, next) {
-
-    Attendance.find({
-        employeeID: req.session.user._id,
-        date: new Date().getDate(),
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
-    }, function getAttendance(err, docs) {
-        var found = 0;
-        if (docs.length > 0) {
-            found = 1;
-        }
-        else {
-
-            var newAttendance = new Attendance();
-            newAttendance.employeeID = req.session.user._id;
-            newAttendance.year = new Date().getFullYear();
-            newAttendance.month = new Date().getMonth() + 1;
-            newAttendance.date = new Date().getDate();
-            newAttendance.present = 1;
-            newAttendance.save(function saveAttendance(err) {
-                if (err) {
-                    console.log(err);
-                }
-
-            });
-        }
-        res.redirect('/admin/view-attendance-current');
-
-    });
-
-});
 module.exports = router;
 
 

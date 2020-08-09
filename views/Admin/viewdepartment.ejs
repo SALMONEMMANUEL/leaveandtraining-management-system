@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HRMS|<%= title %></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.css"/>
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/stylesheets/simple-sidebar.css" rel="stylesheet">
+    <link href="/stylesheets/bootstrap-select.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css" rel="stylesheet">
+    <link rel='stylesheet' href='/stylesheets/style.css'/>
+    <link rel="stylesheet" href="/stylesheets/bootstrap.css">
+
+</head>
+<body>
+    <%-include('../includes/navbar.ejs')%>
+<div id="wrapper">
+    <!-- Sidebar -->
+    <%-include('../includes/admin/sidenavbar.ejs')%>
+    <!-- /#sidebar-wrapper -->
+    
+    <!-- Page Content -->
+
+    <div id="page-content-wrapper">
+        <div class="container-fluid">
+            <div class="navbar navbar-default no-margin">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card-header">
+                    <h1>All Departments</h1>
+                    </div>
+                    <div style="height:517px; overflow: auto">
+                        <table id="example"  class="table table-striped" cellspacing="0" style="height: 10%; overflow: auto;">
+                            <thead class="thead-dark">
+                            <tr>
+                                <th>S/N</th>
+                                <th>Depatment Name</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                        
+                            <tbody>
+                            <% let a=1; item.forEach(function(item){ %>
+                                
+                            <tr>
+                               <td><%=a++%></td>
+                                <td><%= item.type %></td>
+                                
+                                    
+                                <td>
+                                    <table cellspacing="0px">
+                                        <tr>
+                                            <td style="padding: 0%;">
+                                                <form method="get" action="/admin/employee-profile/<%= item._id %>">
+                                                    <button type="submit" class="btn btn-success"><i class="fa fa-eye"
+                                                                             title="View Employee Details"
+                                                                             aria-hidden="true"></i></button>
+                                                </form>
+                                       
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <% }) %>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+    <!-- /#page-content-wrapper -->
+    <%-include('../includes/admin/footer.ejs')%>
+    <%-include('../includes/end.ejs')%>
+
+</div>
+
+<!-- /#wrapper -->
+<!-- jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.3/jquery.js" charset="UTF-8"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.js" charset="UTF-8"></script>
+<script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+<script src="/javascripts/sidebar_menu.js"></script>
+<script>
+    var employeeId;
+    $(document).ready(function () {
+        $("#example").on('click', '.deletemp', function () {
+            $('#name').text($(this).parents().closest('tr').find('td:eq(0)').text());
+            $('#email').text($(this).parents().closest('tr').find('td:eq(1)').text());
+        });
+
+        $(document).on("click", ".delete-button", function () {
+            employeeId = (this.id);
+            document.getElementById("modal-delete-form").action = "/admin/delete-employee/" + employeeId;
+
+        });
+
+        $('#example').dataTable({
+            /* No ordering applied by DataTables during initialisation */
+            "order": []
+        });
+    });
+</script>
+<script>
+
+   
+</script>
+</body>
+
+</html>

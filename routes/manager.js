@@ -1,31 +1,22 @@
 var express = require('express');
 var router = express.Router();
 var User = require('../models/user');
-var UserSalary = require('../models/user_salary');
-var PaySlip = require('../models/payslip');
 var Leave = require('../models/leave');
-var Attendance = require('../models/attendance');
 var moment = require('moment');
-var Project = require('../models/project');
-var PerformanceAppraisal = require('../models/performance_appraisal');
+let modeLeave = require('../models/leavee');
 var flash = require('connect-flash');
 var csrf = require('csurf');
+const user = require('../models/user');
+const { deleteOne } = require('../models/user');
 var csrfProtection = csrf();
 
 router.use('/', isLoggedIn, function checkAuthentication(req, res, next) {
     next();
 });
 
-/**
- * Description:
- * Displays home to the manager
- *
- * Author: Salman Nizam
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
+
+//  *Displays home to the manager
+
 
 router.get('/', function viewHomePage(req, res, next) {
 
@@ -36,29 +27,18 @@ router.get('/', function viewHomePage(req, res, next) {
     });
 });
 
-
-/**
- * Description:
- * Checks which type of manager is logged in.
- * Displays the list of employees to the manager respectively.
- * In case of accounts manager checks if user has entry in UserSalary Schema.
- * Then it enters the data in UserSalary Schema if user is not present.
- * Otherwise gets the data from UserSalary Schema and shows the salary of the employees to the accounts manager
- *
- * Author: Salman Nizam
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
+//   Checks which type of manager is logged in.
+//  Displays the list of employees to the manager respectively.
 
 router.get('/view-employees', function viewEmployees(req, res) {
 
     var userChunks = [];
     var chunkSize = 3;
-    if (req.user.type === 'project_manager') {
+    if (req.user.type === 'commercial_manager') {
+
         //find is asynchronous function
         User.find({type: 'employee'}).sort({_id: -1}).exec(function getUser(err, docs) {
+   
             for (var i = 0; i < docs.length; i++) {
                 userChunks.push(docs[i]);
             }
@@ -70,7 +50,23 @@ router.get('/view-employees', function viewEmployees(req, res) {
 
         });
     }
-    else if (req.user.type === 'accounts_manager') {
+    if (req.user.type === 'human_resource_manager') {
+
+        //find is asynchronous function
+        User.find({type: 'employee'}).sort({_id: -1}).exec(function getUser(err, docs) {
+   
+            for (var i = 0; i < docs.length; i++) {
+                userChunks.push(docs[i]);
+            }
+            res.render('Manager/viewemp_project', {
+                title: 'List Of Employees',
+                csrfToken: req.csrfToken(),
+                users: userChunks, errors: 0, userName: req.session.user.name
+            });
+
+        });
+    }
+    else if (req.user.type === 'financial_manager') {
         //find is asynchronous function
         var salaryChunks = [];
 
@@ -138,17 +134,9 @@ router.get('/view-employees', function viewEmployees(req, res) {
 
 });
 
-/**
- * Description:
- * Displays All the skills of the employee to the project manager.
- *
- * Author: Salman Nizam
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
 
+//   Displays All the skills of the employee to the project manager.
+ 
 router.get('/all-employee-skills/:id', function viewAllEmployeeSkills(req, res, next) {
 
     var employeeId = req.params.id;
@@ -167,16 +155,8 @@ router.get('/all-employee-skills/:id', function viewAllEmployeeSkills(req, res, 
     });
 });
 
-/**
- * Description:
- * Displays all the projects of the employee to the project manager
- *
- * Author: Hassan Qureshi
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
+
+//  Displays all the projects of the employee to the project manager
 
 router.get('/all-employee-projects/:id', function viewAllEmployeeProjects(req, res, next) {
 
@@ -209,16 +189,8 @@ router.get('/all-employee-projects/:id', function viewAllEmployeeProjects(req, r
     });
 });
 
-/**
- * Description:
- * Displays employee project information to the project manager
- *
- * Author: Salman Nizam
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
+
+//   Displays employee project information to the project manager
 
 router.get('/employee-project-info/:id', function viewEmployeeProjectInfo(req, res, next) {
 
@@ -246,16 +218,9 @@ router.get('/employee-project-info/:id', function viewEmployeeProjectInfo(req, r
 
 });
 
-/**
- * Description:
- * Displays the performance appraisal form for the employee to the project manager.
- *
- * Author: Salman Nizam
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
+
+//   Displays the performance appraisal form for the employee to the project manager.
+
 
 router.get('/provide-performance-appraisal/:id', function providePerformanceAppraisal(req, res, next) {
 
@@ -299,16 +264,9 @@ router.get('/provide-performance-appraisal/:id', function providePerformanceAppr
 
 });
 
-/**
- * Description:
- * Displays currently marked attendance to the manager.
- *
- * Author: Hassan Qureshi
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
+
+//  Displays currently marked attendance to the manager.
+
 
 router.get('/view-attendance-current', function viewCurrentMarkedAttendance(req, res, next) {
 
@@ -338,36 +296,63 @@ router.get('/view-attendance-current', function viewCurrentMarkedAttendance(req,
     });
 });
 
-/**
- * Description:
- * Displays leave application form for the manager to apply for leave
- *
- * Author: Salman Nizam
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
+
+//   Displays leave application form for the manager to apply for leave
+
 
 router.get('/apply-for-leave', function applyForLeave(req, res, next) {
 
-    res.render('Manager/managerApplyForLeave', {
-        title: 'Apply for Leave',
-        csrfToken: req.csrfToken(),
-        userName: req.session.user.name
-    });
-});
+    Leave.findOne({
+        // _id:department,
+        // applicantID:req.user._id
+    })
+    .populate('departmentName')
+    .exec(function(err,data){
+        if(err){
+            console.log(err)
+        }
+        console.log()
+    })
+    .then(request=>{
+        console.log(request);
+    })
 
-/**
- * Description:
- * Manager gets the list of all his/her applied leaves.
- *
- * Author: Salman Nizam
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
+    modeLeave.find({}, { _id : 0, type : 1 }, function(error, docone){
+
+        if(error) console.log("Error: ", error);
+        else{
+
+            let type = []
+
+            for(let a = 0; a < docone.length; a++){
+
+                if(!type.includes(docone[a]["type"])){
+
+                    type.push(docone[a]["type"])
+                }
+            }
+
+            res.render('Manager/managerApplyForLeave', {
+                title: 'Apply for Leave',
+                type : type,
+                csrfToken: req.csrfToken(),
+                userName: req.session.user.name
+            });
+        }
+    })
+});
+// router.get('/apply-for-leave', function applyForLeave(req, res, next) {
+
+//     res.render('Manager/managerApplyForLeave', {
+//         title: 'Apply for Leave',
+//         csrfToken: req.csrfToken(),
+//         userName: req.session.user.name
+//     });
+// });
+
+
+//   Manager gets the list of all his/her applied leaves.
+
 
 router.get('/applied-leaves', function appliedLeaves(req, res, next) {
 
@@ -395,17 +380,9 @@ router.get('/applied-leaves', function appliedLeaves(req, res, next) {
 });
 
 
-/**
- * Description:
- * Displays logged in manager his/her profile.
- *
- * Author: Hassan Qureshi
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
 
+//  Displays logged in manager his/her profile.
+ 
 router.get('/view-profile', function viewProfile(req, res, next) {
 
     User.findById(req.user._id, function getUser(err, user) {
@@ -424,17 +401,10 @@ router.get('/view-profile', function viewProfile(req, res, next) {
 
 });
 
-/**
- * Description:
- * Gets the id of the project to be shown form request parameters.
- * Displays the project to the project manager.
- *
- * Author: Hassan Qureshi
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
+
+//   Gets the id of the project to be shown form request parameters.
+//  Displays the project to the project manager.
+
 
 router.get('/view-project/:project_id', function viewProject(req, res, next) {
 
@@ -456,16 +426,9 @@ router.get('/view-project/:project_id', function viewProject(req, res, next) {
 
 });
 
-/**
- * Description:
- * Displays list of all the project managers project.
- *
- * Author: Hassan Qureshi
- *
- * Last Updated: 30th November, 2016 Salman Nizam
- *
- * Known Bugs: None
- */
+
+//   Displays list of all the project managers project.
+
 
 router.get('/view-all-personal-projects', function viewAllPersonalProjects(req, res, next) {
 
@@ -490,18 +453,9 @@ router.get('/view-all-personal-projects', function viewAllPersonalProjects(req, 
 
 });
 
-/**
- * Description:
- * Checks if pay slip has already been generated.
- * If yes then fills the field of the form with current attributes.
- * Then displays the pay slip form for the employee to the project manager.
- *
- * Author: Hassan Qureshi
- *
- * Last Updated: 30th November, 2016
- *
- * Known Bugs: None
- */
+//  * Checks if pay slip has already been generated.
+//  * If yes then fills the field of the form with current attributes.
+//  * Then displays the pay slip form for the employee to the project manager.
 
 router.get('/generate-pay-slip/:employee_id', function generatePaySlip(req, res, next) {
 
@@ -557,6 +511,101 @@ router.get('/generate-pay-slip/:employee_id', function generatePaySlip(req, res,
 
 });
 
+
+
+// show the lists of all leave application aplied by theemployees
+router.get('/leave-applications', function getLeaveApplications(req, res, next) {
+
+    var leaveChunks = [];
+    var employeeChunks = [];
+    var temp;
+    //find is asynchronous function
+    Leave.find({}).sort({_id: -1}).exec(function findAllLeaves(err, docs) {
+        var hasLeave = 0;
+        if (docs.length > 0) {
+            hasLeave = 1;
+        }
+        for (var i = 0; i < docs.length; i++) {
+            leaveChunks.push(docs[i])
+        }
+        for (var i = 0; i < leaveChunks.length; i++) {
+
+            User.findById(leaveChunks[i].applicantID, function getUser(err, user) {
+                if (err) {
+                    console.log(err);
+                }
+                employeeChunks.push(user);
+
+            })
+        }
+
+        // call the rest of the code and have it execute after 3 seconds
+        setTimeout(render_view, 900);
+        function render_view() {
+            res.render('Manager/allApplications', {
+                title: 'List Of Leave Applications',
+                csrfToken: req.csrfToken(),
+                hasLeave: hasLeave,
+                leaves: leaveChunks,
+                employees: employeeChunks, moment: moment, userName: req.session.user.name
+            });
+        }
+    });
+
+});
+
+
+//   Then shows the response application form of that leave of the employee to the admin.
+
+router.get('/respond-application/:leave_id/:employee_id', function respondApplication(req, res, next) {
+    var leaveID = req.params.leave_id;
+    var employeeID = req.params.employee_id;
+    Leave.findById(leaveID, function getLeave(err, leave) {
+
+        if (err) {
+            console.log(err);
+        }
+        User.findById(employeeID, function getUser(err, user) {
+            if (err) {
+                console.log(err);
+            }
+            res.render('Manager/applicationResponse', {
+                title: 'Respond Leave Application',
+                csrfToken: req.csrfToken(),
+                leave: leave,
+                employee: user,
+                moment: moment, userName: req.session.user.name
+            });
+
+
+        })
+
+
+    });
+
+
+});
+
+
+//repond to application
+
+router.post('/respond-application', function respondApplication(req, res) {
+
+    Leave.findById(req.body.leave_id, function getLeave(err, leave) {
+        leave.managerResponse = req.body.status;
+        leave.reasons = req.body.reasons;
+        leave.save(function saveLeave(err) {
+            if (err) {
+                console.log(err);
+            }
+            res.redirect('/manager/leave-applications');
+        })
+    })
+
+
+});
+
+
 /**
  * Description:
  * Reads the parameters from the body of the post request.
@@ -568,26 +617,46 @@ router.get('/generate-pay-slip/:employee_id', function generatePaySlip(req, res,
  *
  * Known Bugs: None
  */
-
 router.post('/apply-for-leave', function applyForLeave(req, res, next) {
+    let { title, type, start_date, end_date, reason,bankType,bankLocation ,salary,address,payable} = req.body
+    // console.log({ title, type, start_date, end_date, reason,bankType,bankLocation ,salary,address})
+    modeLeave.findOne({ type : type }, { _id : 0, period : 1 }, (error, docone) => {
 
-    var newLeave = new Leave();
-    newLeave.applicantID = req.user._id;
-    newLeave.title = req.body.title;
-    newLeave.type = req.body.type;
-    newLeave.startDate = new Date(req.body.start_date);
-    newLeave.endDate = new Date(req.body.end_date);
-    newLeave.period = req.body.period;
-    newLeave.reason = req.body.reason;
-    newLeave.appliedDate = new Date();
-    newLeave.adminResponse = 'Pending';
-    newLeave.save(function saveLeave(err) {
-        if (err) {
-            console.log(err);
+        if(error) console.log("Error: ", error);
+        else{
+
+            let period = docone["period"]
+
+            // console.log({ title, type, period, start_date, end_date, reason })
+
+            let dataone = new Leave({
+              
+                applicantID: req.user._id,
+                title: title,
+                type: type,
+                payable:payable,
+                salary:salary,
+                bankType:bankType,
+                bankLocation:bankLocation,
+                address:address,
+                startDate: start_date,
+                endDate: end_date,
+                period: period,
+                reason: reason,
+                adminResponse: "Pending"
+            })
+
+            dataone.save((error, result) => {
+
+                if(error) console.log("Error: ", error);
+                else{
+                    
+                    res.redirect('/employee/applied-leaves');
+                    console.log("data saved successfull");
+                }
+            })
         }
-        res.redirect('/manager/applied-leaves');
-    });
-
+    })
 });
 
 /**

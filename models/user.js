@@ -11,10 +11,15 @@ var UserSchema = new Schema({
     name: {type: String, required: true},
     dateOfBirth: {type: Date, required: true},
     contactNumber: {type: String, required: true},
-    department: String,
+    department:{type:String,required:true},
     Skills: [String],
     designation: String,
-    dateAdded: {type: Date}
+    dateAdded: {type: Date},
+    is_active : Number,
+    resetlink:{
+        data:String,
+        default:""
+    }
 
 });
 

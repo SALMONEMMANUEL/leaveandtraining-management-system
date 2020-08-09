@@ -1,39 +1,47 @@
 
 <nav class="navbar navbar-default no-margin">
-<div class="row">
+
   
   <div class="container-fluid">
-  <div class="col-md-2">
+    <div class="row">
+      <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
     <!-- <div class="navbar-header fixed-brand" >
       <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" id="menu-toggle">
           <span class="glyphicon glyphicon-th-large" style="margin-left:5px;" aria-hidden="true"></span>
       </button> -->
       <img src="/images/moruwasa.png" alt="" style="height: 100px;width: 221px;">
   </div>
-<div class="col-md-10">
-<div class="navbar-header fixed-brand">
+  
+  <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+    
   <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" id="menu-toggle">
       <span class="glyphicon glyphicon-th-large" style="margin-left:5px;" aria-hidden="true"></span>
   </button>
-  <a class="navbar-brand" href="#" style="margin-left: 623px;color: black;margin-top: 8px;width: 223px;" ><i class="fa fa-user" style="font-size: large;color: black;"></i> <%= userName %></a>
-</div><!-- navbar-header-->
+  </ul>
+  </div>
 
-<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-  <ul class="nav navbar-nav">
-      <li class="active">
-          <button class="navbar-toggle collapse in" data-toggle="collapse" id="menu-toggle-2"><span
-                      class="glyphicon glyphicon-th-large" aria-hidden="true" ></span></button>
-      </li>
-      <li class="navbar-brand">
+<div class="col-lg-5 col-md-5 col-sm-5 col-xs-5">
+  <a class="navbar-brand" href="#" style="margin-left: 58px;color: black;margin-top: 8px;width: 223px;" ><i class="fa fa-user" style="font-size: large;color: black;float:left;"></i> <%= userName %></a>
+</div>
+
+<div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+
+  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    <ul class="nav navbar-nav">
+<li class="active">
+  <button class="navbar-toggle collapse in" data-toggle="collapse" id="menu-toggle-2"><span
+              class="glyphicon glyphicon-th-large" aria-hidden="true" ></span></button>
+</li>
+      
           <form action="/logout" method="get">
-              <button id="logout" type="submit" style="margin-top: -90px;margin-left: 897px;" class="btn btn-secondary"><i
+              <button id="logout" type="submit" style="margin-top: -3px;margin-left: 4px;" class="btn btn-secondary"><i
                           class="fa fa-user" aria-hidden="true"></i> Logout
               </button>
           </form>
-      </li>
-  </ul>
+    
+  
 </div><!-- bs-example-navbar-collapse-1 -->
 </div>
 </div>
-</nav>
 </div>
+</nav>

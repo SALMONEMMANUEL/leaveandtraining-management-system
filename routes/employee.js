@@ -1,22 +1,22 @@
 var express = require('express');
 var router = express.Router();
 var Leave = require('../models/leave');
-var Attendance = require('../models/attendance');
-var Project = require('../models/project');
 var moment = require('moment');
 var User = require('../models/user');
 var csrf = require('csurf');
 var csrfProtection = csrf();
 var moment = require('moment');
-// var Leavetype = require('../models/createleave')
+const staffController = require('../config/staffs');
 var mongoose = require('mongoose')
-
 let modeLeave = require('../models/leavee');
-
+const { body } = require('express-validator');
+const Trequest = require('../models/training/request')
+const Material = require('../models/training/material');
+const Department = require('../models/department');
+const department = require('../models/department');
 router.use('/', isLoggedIn, function checkAuthentication(req, res, next) {
     next();
 });
-
 
 
 router.get('/', function viewHome(req, res, next) {
@@ -28,7 +28,22 @@ router.get('/', function viewHome(req, res, next) {
 });
 // aplly  for leave
 router.get('/apply-for-leave', function applyForLeave(req, res, next) {
-    
+
+    Leave.findOne({
+        // _id:department,
+        applicantID:req.user._id
+    })
+    // .populate('applicantID')
+    // .exec(function(err,data){
+    //     if(err){
+    //         console.log(err)
+    //     }
+    //     console.log()
+    // })
+    .then(request=>{
+        console.log(request);
+    })
+
     modeLeave.find({}, { _id : 0, type : 1 }, function(error, docone){
 
         if(error) console.log("Error: ", error);
@@ -88,14 +103,58 @@ router.get('/traininghome', function traininghome(req, res, next) {
 });
 
 // display the training  application form
-router.get('/apply-for-training', function applyForTraining(req, res, next) {
-    res.render('Employee/appyForTraining', {
+router.get('/requestFortraining', function applyForTraining(req, res, next) {
+    res.render('Employee/requestFortraining', {
         title: 'Apply for Training',
         csrfToken: req.csrfToken(),
         userName: req.session.user.name
     });
 });
 
+//posting the requesting of the trainig
+router.post('/requesting',function(req,res,next){
+    let{ title ,place, startDate, endDate,period,reason
+    } = req.body;
+    console.log({ title ,place, startDate, endDate,period,reason
+    })
+    let request = Trequest({
+        applicantID:req.user._id,
+        title:title,
+        place:place, 
+        startDate:startDate,
+         endDate:endDate, 
+         period:period,
+         reason:reason,
+         adminResponse:"Pending"
+    })
+    request.save((err,doc)=>{
+        if(err){
+            console.log('data not saved in db')
+        }
+        else{
+            res.redirect('/employee/requestFortraining')
+        }
+    })
+    
+})
+//display employee upload training report
+router.get('/uploadreport', staffController.getIndex);
+router.post('/training', [
+
+
+], staffController.postLeave);
+//display materials or resources uploaded by the admin or HR
+router.get('/material',function(req,res,next) {
+    Material.find({})
+    .then(result=>{
+        res.render('Employee/viewmaterials',{
+        title: 'Materials for learning',
+        result:result,
+        csrfToken: req.csrfToken(),
+        userName: req.session.user.name
+        })
+    })
+})
 
  
 //   Displays employee his/her profile.
@@ -120,9 +179,8 @@ router.get('/view-profile', function viewProfile(req, res, next) {
 });
 // post the applied leave in the database
 router.post('/apply-for-leave', function applyForLeave(req, res, next) {
-
-    let { title, type, start_date, end_date, reason } = req.body
-    
+    let { title, type, start_date, end_date, reason,bankType,bankLocation ,salary,address,payable} = req.body
+    // console.log({ title, type, start_date, end_date, reason,bankType,bankLocation ,salary,address})
     modeLeave.findOne({ type : type }, { _id : 0, period : 1 }, (error, docone) => {
 
         if(error) console.log("Error: ", error);
@@ -133,10 +191,15 @@ router.post('/apply-for-leave', function applyForLeave(req, res, next) {
             // console.log({ title, type, period, start_date, end_date, reason })
 
             let dataone = new Leave({
-
+              
                 applicantID: req.user._id,
                 title: title,
                 type: type,
+                payable:payable,
+                salary:salary,
+                bankType:bankType,
+                bankLocation:bankLocation,
+                address:address,
                 startDate: start_date,
                 endDate: end_date,
                 period: period,

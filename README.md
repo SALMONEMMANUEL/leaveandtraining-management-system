@@ -6,27 +6,21 @@ The product shall consist of the basic modules, which are listed as follows
 1. Separate user accounts for all the admins and employees.
 2. Distinct views of data and distinct data access to the members, based on their privileges.
 3. Employee/Admin registration.
-4. Managing attendance of all the employees.
-5. Managing salaries of all the employees.
-6. Keeping an employee’s educational and industrial experience record.
-7. Managing the current allocated projects to the employees, within the organization.
 
 ##Users:
  1. Admin:
-    He/She have complete access of the system which includes registration of employees; decide privileges for other employees, viewing       and modifying attendance of the present day, viewing and modifying employee salary, delete record or profile of employee, allocation     and de-allocation of project to an employee, approve/disapprove leave application of an employee.
+    He/She have complete access of the system which includes registration of employees; decide privileges for other employees, viewing  viewing and modifying employee salary, delete record or profile of employee, allocation  , approve/disapprove leave application of an employee.
  2. Employee:
-     He/She will be able to mark his/her attendance, view his/her attendance history, to view his/her current salary,  view his/her           current employee profile (including educational and industrial history), view all his/her projects within organization, view other         employees who are sharing the same project with him, apply for leave and view status of leave applications.
- 3. Project Manager:
-     He/She will be able to view skills of employees, provide performance appraisal to employee.
- 4. Accounts Manager:
-     He/She will be able to generate pay slip for each employee, set bonus for employee, set pay of employee, increment pay of       employee, sent email pay slip to each employee. 
+     He/She will be able to  view his/her , ,  view his/her           current employee profile (including educational and industrial history), apply for leave and view status of leave applications.
+
+ 
 
 ##How to run the project:
 1. Place all these folders and files in one folder.
 
-2. Open that folder in Web Storm IDE.
+2. Open that folder in any IDE.
 
-3. Run the bin/www server by pressing green arrow button in right corner of the window. 
+3. Run the bin/www server . 
 
 4. Now server is started.
 
